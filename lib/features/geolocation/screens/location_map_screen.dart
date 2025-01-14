@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/location_service.dart';
-import 'dart:async';
 import '../widgets/map_settings_drawer.dart';
+import 'dart:async';
 
 class LocationMapScreen extends StatefulWidget {
   const LocationMapScreen({super.key});
@@ -13,17 +13,29 @@ class LocationMapScreen extends StatefulWidget {
 }
 
 class _LocationMapScreenState extends State<LocationMapScreen> {
+  static const _defaultZoomLevel = 15.0;
+  static const _locationUpdateInterval = Duration(milliseconds: 100);
+  static const _arrowControlsBottomPadding = 100.0;
+  static const _arrowControlsRightPadding = 16.0;
+  static const _arrowSpacing = 40.0;
+
   final LocationService _locationService = LocationService();
   final MapController _mapController = MapController();
+  Timer? _locationUpdateTimer;
   LatLng? _currentLocation;
   bool _useMockLocation = false;
   bool _showArrowControls = false;
-  Timer? _locationUpdateTimer;
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    _locationUpdateTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -34,15 +46,19 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
       });
       _animateToCurrentLocation();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error getting location: $e')),
-      );
+      _showErrorSnackBar('Error getting location: $e');
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   void _animateToCurrentLocation() {
     if (_currentLocation != null) {
-      _mapController.move(_currentLocation!, 15);
+      _mapController.move(_currentLocation!, _defaultZoomLevel);
     }
   }
 
@@ -51,107 +67,19 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
       _useMockLocation = !_useMockLocation;
       _locationService.toggleMockLocation(_useMockLocation);
       if (_useMockLocation) {
-        // Mock location set to Cieszyn, Poland
-        _locationService.setMockedLocation(49.7500, 18.6333);
+        _locationService.setMockedLocation(
+            49.7500, 18.6333); // Cieszyn coordinates
       }
     });
     _getCurrentLocation();
   }
 
-  Widget _buildArrowControls() {
-    return Positioned(
-      bottom: 100,
-      right: 16,
-      child: Column(
-        children: [
-          GestureDetector(
-            onTapDown: (_) {
-              _locationService.startWalking(Direction.north);
-              _startLocationUpdates();
-            },
-            onTapUp: (_) {
-              _locationService.stopWalking();
-              _stopLocationUpdates();
-            },
-            onTapCancel: () {
-              _locationService.stopWalking();
-              _stopLocationUpdates();
-            },
-            child: IconButton(
-              icon: const Icon(Icons.arrow_upward),
-              onPressed: () {}, // Empty because we're using GestureDetector
-            ),
-          ),
-          Row(
-            children: [
-              GestureDetector(
-                onTapDown: (_) {
-                  _locationService.startWalking(Direction.west);
-                  _startLocationUpdates();
-                },
-                onTapUp: (_) {
-                  _locationService.stopWalking();
-                  _stopLocationUpdates();
-                },
-                onTapCancel: () {
-                  _locationService.stopWalking();
-                  _stopLocationUpdates();
-                },
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {}, // Empty because we're using GestureDetector
-                ),
-              ),
-              const SizedBox(width: 40),
-              GestureDetector(
-                onTapDown: (_) {
-                  _locationService.startWalking(Direction.east);
-                  _startLocationUpdates();
-                },
-                onTapUp: (_) {
-                  _locationService.stopWalking();
-                  _stopLocationUpdates();
-                },
-                onTapCancel: () {
-                  _locationService.stopWalking();
-                  _stopLocationUpdates();
-                },
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_forward),
-                  onPressed: () {}, // Empty because we're using GestureDetector
-                ),
-              ),
-            ],
-          ),
-          GestureDetector(
-            onTapDown: (_) {
-              _locationService.startWalking(Direction.south);
-              _startLocationUpdates();
-            },
-            onTapUp: (_) {
-              _locationService.stopWalking();
-              _stopLocationUpdates();
-            },
-            onTapCancel: () {
-              _locationService.stopWalking();
-              _stopLocationUpdates();
-            },
-            child: IconButton(
-              icon: const Icon(Icons.arrow_downward),
-              onPressed: () {}, // Empty because we're using GestureDetector
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _startLocationUpdates() {
     _locationUpdateTimer?.cancel();
-    _locationUpdateTimer =
-        Timer.periodic(const Duration(milliseconds: 100), (_) {
-      _getCurrentLocation();
-    });
+    _locationUpdateTimer = Timer.periodic(
+      _locationUpdateInterval,
+      (_) => _getCurrentLocation(),
+    );
   }
 
   void _stopLocationUpdates() {
@@ -159,10 +87,76 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
     _locationUpdateTimer = null;
   }
 
-  @override
-  void dispose() {
-    _locationUpdateTimer?.cancel();
-    super.dispose();
+  Widget _handleDirectionalControl(
+    Direction direction, {
+    required VoidCallback onStart,
+    required VoidCallback onStop,
+  }) {
+    return GestureDetector(
+      onTapDown: (_) {
+        onStart();
+        _startLocationUpdates();
+      },
+      onTapUp: (_) {
+        onStop();
+        _stopLocationUpdates();
+      },
+      onTapCancel: () {
+        onStop();
+        _stopLocationUpdates();
+      },
+      child: IconButton(
+        icon: _getDirectionIcon(direction),
+        onPressed: () {}, // Empty because we're using GestureDetector
+      ),
+    );
+  }
+
+  Icon _getDirectionIcon(Direction direction) {
+    return Icon(
+      switch (direction) {
+        Direction.north => Icons.arrow_upward,
+        Direction.south => Icons.arrow_downward,
+        Direction.east => Icons.arrow_forward,
+        Direction.west => Icons.arrow_back,
+      },
+    );
+  }
+
+  Widget _buildArrowControls() {
+    return Positioned(
+      bottom: _arrowControlsBottomPadding,
+      right: _arrowControlsRightPadding,
+      child: Column(
+        children: [
+          _handleDirectionalControl(
+            Direction.north,
+            onStart: () => _locationService.startWalking(Direction.north),
+            onStop: () => _locationService.stopWalking(),
+          ),
+          Row(
+            children: [
+              _handleDirectionalControl(
+                Direction.west,
+                onStart: () => _locationService.startWalking(Direction.west),
+                onStop: () => _locationService.stopWalking(),
+              ),
+              SizedBox(width: _arrowSpacing),
+              _handleDirectionalControl(
+                Direction.east,
+                onStart: () => _locationService.startWalking(Direction.east),
+                onStop: () => _locationService.stopWalking(),
+              ),
+            ],
+          ),
+          _handleDirectionalControl(
+            Direction.south,
+            onStart: () => _locationService.startWalking(Direction.south),
+            onStop: () => _locationService.stopWalking(),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -184,38 +178,37 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
       ),
       body: Stack(
         children: [
-          _currentLocation == null
-              ? const Center(child: CircularProgressIndicator())
-              : FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: _currentLocation!,
-                    initialZoom: 15,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: 'assets/map_tiles/{z}/{x}/{y}.png',
-                      fallbackUrl:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      maxZoom: 19,
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: _currentLocation!,
-                          width: 80,
-                          height: 80,
-                          child: Icon(
-                            Icons.location_pin,
-                            color:
-                                _useMockLocation ? Colors.orange : Colors.blue,
-                            size: 40,
-                          ),
-                        ),
-                      ],
+          if (_currentLocation == null)
+            const Center(child: CircularProgressIndicator())
+          else
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _currentLocation!,
+                initialZoom: _defaultZoomLevel,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'assets/map_tiles/{z}/{x}/{y}.png',
+                  fallbackUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  maxZoom: 19,
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _currentLocation!,
+                      width: 80,
+                      height: 80,
+                      child: Icon(
+                        Icons.location_pin,
+                        color: _useMockLocation ? Colors.orange : Colors.blue,
+                        size: 40,
+                      ),
                     ),
                   ],
                 ),
+              ],
+            ),
           if (_showArrowControls && _useMockLocation) _buildArrowControls(),
         ],
       ),
