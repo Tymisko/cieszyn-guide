@@ -6,6 +6,7 @@ import '../widgets/map_settings_drawer.dart';
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import '../services/poi_service.dart';
+import 'poi_details_screen.dart';
 
 class LocationMapScreen extends StatefulWidget {
   const LocationMapScreen({super.key});
@@ -64,7 +65,7 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
           Marker(
             point: LatLng(poi['latitude'], poi['longitude']),
             child: GestureDetector(
-              onTap: () => _showPOIDetails(poi['name'], poi['minimalDescription']),
+              onTap: () => _showPOIDetails(poi),
               child: const Icon(Icons.location_pin),
             ),
           ),
@@ -182,26 +183,49 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
     );
   }
 
-  void _showPOIDetails(String poiName, String description) {
+  void _showPOIDetails(Map<String, dynamic> poi) {
     setState(() {
-      _selectedPOIName = poiName;
+      _selectedPOIName = poi['name'];
     });
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                poiName,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        return GestureDetector(
+          onTap: () {
+            Navigator.pop(context); // Close the bottom sheet
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => POIDetailsScreen(
+                  poiName: poi['name'],
+                  description: poi['minimalDescription'],
+                  category: poi['category'],
+                  rating: poi['rating'],
+                  address: poi['address'],
+                  website: poi['website'],
+                  phone: poi['phone'],
+                  photoUrl: poi['photoUrl'],
+                  openNow: poi['openNow'],
+                  hours: Map<String, String>.from(poi['hours']),
+                  reviews: List<Map<String, dynamic>>.from(poi['reviews']),
+                ),
               ),
-              const SizedBox(height: 16),
-              Text(description),
-              // Add more details as needed
-            ],
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  poi['name'],
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Text(poi['minimalDescription']),
+                // Add more details as needed
+              ],
+            ),
           ),
         );
       },
