@@ -5,16 +5,23 @@ class POIService {
     
     return [
       {
-        'name': 'Landmark 1',
+        'name': 'Landmark',
         'latitude': position.latitude + 0.001,
-        'longitude': position.longitude + 0.001,
+        'longitude': position.longitude - 0.002,
+        'minimalDescription': 'A famous landmark',
       },
       {
-        'name': 'Restaurant 1',
-        'latitude': position.latitude + 0.002,
+        'name': 'Restaurant',
+        'latitude': position.latitude + 0.004,
         'longitude': position.longitude + 0.002,
+        'minimalDescription': 'A popular restaurant',
       },
-      // Add more POIs as needed
+      {
+        'name': 'Museum',
+        'latitude': position.latitude - 0.003,
+        'longitude': position.longitude + 0.003,
+        'minimalDescription': 'A local museum',
+      },
     ];
   }
 }

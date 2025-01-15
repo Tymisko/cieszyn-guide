@@ -64,7 +64,7 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
           Marker(
             point: LatLng(poi['latitude'], poi['longitude']),
             child: GestureDetector(
-              onTap: () => _showPOIDetails(poi['name']),
+              onTap: () => _showPOIDetails(poi['name'], poi['minimalDescription']),
               child: const Icon(Icons.location_pin),
             ),
           ),
@@ -182,7 +182,7 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
     );
   }
 
-  void _showPOIDetails(String poiName) {
+  void _showPOIDetails(String poiName, String description) {
     setState(() {
       _selectedPOIName = poiName;
     });
@@ -199,7 +199,7 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              const Text('Details about the POI will be shown here.'),
+              Text(description),
               // Add more details as needed
             ],
           ),
