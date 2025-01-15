@@ -4,6 +4,8 @@ import 'package:latlong2/latlong.dart';
 import '../services/location_service.dart';
 import '../widgets/map_settings_drawer.dart';
 import 'dart:async';
+import 'package:geolocator/geolocator.dart';
+import '../services/poi_service.dart';
 
 class LocationMapScreen extends StatefulWidget {
   const LocationMapScreen({super.key});
@@ -25,6 +27,9 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
   LatLng? _currentLocation;
   bool _useMockLocation = false;
   bool _showArrowControls = false;
+  final Set<Marker> _markers = {};
+  final POIService _poiService = POIService();
+  String? _selectedPOIName;
 
   @override
   void initState() {
@@ -45,9 +50,27 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
         _currentLocation = LatLng(position.latitude, position.longitude);
       });
       _animateToCurrentLocation();
+      _addPOIMarkers(position);
     } catch (e) {
       _showErrorSnackBar('Error getting location: $e');
     }
+  }
+
+  Future<void> _addPOIMarkers(Position position) async {
+    List<Map<String, dynamic>> pois = await _poiService.fetchNearbyPOIs(position);
+    setState(() {
+      for (var poi in pois) {
+        _markers.add(
+          Marker(
+            point: LatLng(poi['latitude'], poi['longitude']),
+            child: GestureDetector(
+              onTap: () => _showPOIDetails(poi['name']),
+              child: const Icon(Icons.location_pin),
+            ),
+          ),
+        );
+      }
+    });
   }
 
   void _showErrorSnackBar(String message) {
@@ -159,6 +182,32 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
     );
   }
 
+  void _showPOIDetails(String poiName) {
+    setState(() {
+      _selectedPOIName = poiName;
+    });
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                poiName,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              const Text('Details about the POI will be shown here.'),
+              // Add more details as needed
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -205,6 +254,8 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
                         size: 40,
                       ),
                     ),
+                    // Add POI markers
+                    ..._markers,
                   ],
                 ),
               ],
