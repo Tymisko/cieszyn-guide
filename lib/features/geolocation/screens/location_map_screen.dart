@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import '../services/poi_service.dart';
 import 'poi_details_screen.dart';
+import 'dart:convert';
 
 class LocationMapScreen extends StatefulWidget {
   const LocationMapScreen({super.key});
@@ -206,8 +207,8 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
                   phone: poi['phone'],
                   photoUrl: poi['photoUrl'],
                   openNow: poi['openNow'],
-                  hours: Map<String, String>.from(poi['hours']),
-                  reviews: List<Map<String, dynamic>>.from(poi['reviews']),
+                  hours: Map<String, String>.from(json.decode(poi['hours'])),
+                  reviews: List<Map<String, dynamic>>.from(json.decode(poi['reviews'])),
                 ),
               ),
             );
