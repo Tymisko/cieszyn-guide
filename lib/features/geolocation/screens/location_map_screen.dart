@@ -199,7 +199,7 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
               MaterialPageRoute(
                 builder: (context) => POIDetailsScreen(
                   poiName: poi['name'],
-                  description: poi['minimalDescription'],
+                  description: poi['description'],
                   category: poi['category'],
                   rating: poi['rating'],
                   address: poi['address'],

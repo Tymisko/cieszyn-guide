@@ -17,7 +17,7 @@ class POIService {
       path,
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE pois(id INTEGER PRIMARY KEY, name TEXT, latitude REAL, longitude REAL, minimalDescription TEXT, category TEXT, rating REAL, address TEXT, website TEXT, phone TEXT, photoFile TEXT, openNow INTEGER, hours TEXT, reviews TEXT)',
+          'CREATE TABLE pois(id INTEGER PRIMARY KEY, name TEXT, latitude REAL, longitude REAL, minimalDescription TEXT, description TEXT, category TEXT, rating REAL, address TEXT, website TEXT, phone TEXT, photoFile TEXT, openNow INTEGER, hours TEXT, reviews TEXT)',
         );
       },
       version: 1,
@@ -64,6 +64,7 @@ class POIService {
         'latitude': position.latitude + 0.001,
         'longitude': position.longitude - 0.002,
         'minimalDescription': 'A famous historic landmark',
+        'description': 'This historic landmark is a must-see for all visitors. It has a rich history and is a popular spot for tourists and locals alike.',
         'category': 'Historic',
         'rating': 4.8,
         'address': '123 Heritage Blvd, Cityland',
@@ -79,6 +80,7 @@ class POIService {
         'latitude': position.latitude + 0.004,
         'longitude': position.longitude + 0.002,
         'minimalDescription': 'A popular gourmet restaurant',
+        'description': 'This gourmet restaurant offers a wide selection of delicious dishes and drinks. It is known for its high-quality ingredients and excellent service.',
         'category': 'Food & Drink',
         'rating': 4.3,
         'address': '456 Gourmet Ave, Foodtown',
@@ -94,6 +96,7 @@ class POIService {
         'latitude': position.latitude - 0.003,
         'longitude': position.longitude + 0.003,
         'minimalDescription': 'A local museum showcasing art and history',
+        'description': 'This museum features a variety of exhibits on art, history, and culture. It is a great place to learn about the city\'s past and present.',
         'category': 'Arts & Culture',
         'rating': 4.5,
         'address': '789 Culture St, Cityland',
