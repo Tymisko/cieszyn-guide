@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'features/geolocation/screens/location_map_screen.dart';
-import 'features/geolocation/services/poi_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -205,7 +205,7 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
                   address: poi['address'],
                   website: poi['website'],
                   phone: poi['phone'],
-                  photoUrl: poi['photoUrl'],
+                  photoFile: poi['photoFile'],
                   openNow: poi['openNow'],
                   hours: Map<String, String>.from(json.decode(poi['hours'])),
                   reviews: List<Map<String, dynamic>>.from(json.decode(poi['reviews'])),
