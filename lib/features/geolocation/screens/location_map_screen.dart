@@ -184,54 +184,78 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
     );
   }
 
-  void _showPOIDetails(Map<String, dynamic> poi) {
-    setState(() {
-      _selectedPOIName = poi['name'];
-    });
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return GestureDetector(
-          onTap: () {
-            Navigator.pop(context); // Close the bottom sheet
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => POIDetailsScreen(
-                  poiName: poi['name'],
-                  description: poi['description'],
-                  category: poi['category'],
-                  rating: poi['rating'],
-                  address: poi['address'],
-                  website: poi['website'],
-                  phone: poi['phone'],
-                  photoFile: poi['photoFile'],
-                  openNow: poi['openNow'],
-                  hours: Map<String, String>.from(json.decode(poi['hours'])),
-                  reviews: List<Map<String, dynamic>>.from(json.decode(poi['reviews'])),
-                ),
+void _showPOIDetails(Map<String, dynamic> poi) {
+  setState(() {
+    _selectedPOIName = poi['name'];
+  });
+
+  // Initialize favorite status for the POI if not already set
+  poi['isFavorite'] = poi['isFavorite'] ?? false;
+
+  showModalBottomSheet(
+    context: context,
+    builder: (context) {
+      return GestureDetector(
+        onTap: () => Navigator.pop(context), // Close the bottom sheet
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    poi['name'],
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      poi['isFavorite'] ? Icons.favorite : Icons.favorite_border,
+                      color: poi['isFavorite'] ? Colors.red : Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        poi['isFavorite'] = !poi['isFavorite'];
+                      });
+                    },
+                  ),
+                ],
               ),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  poi['name'],
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                Text(poi['minimalDescription']),
-                // Add more details as needed
-              ],
-            ),
+              const SizedBox(height: 16),
+              Text(poi['minimalDescription']),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close the bottom sheet
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => POIDetailsScreen(
+                        poiName: poi['name'],
+                        description: poi['description'],
+                        category: poi['category'],
+                        rating: poi['rating'],
+                        address: poi['address'],
+                        website: poi['website'],
+                        phone: poi['phone'],
+                        photoFile: poi['photoFile'],
+                        openNow: poi['openNow'],
+                        hours: Map<String, String>.from(json.decode(poi['hours'])),
+                        reviews: List<Map<String, dynamic>>.from(json.decode(poi['reviews'])),
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('View Details'),
+              ),
+            ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
