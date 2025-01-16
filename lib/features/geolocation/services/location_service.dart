@@ -21,6 +21,8 @@ class LocationService {
     'headingAccuracy': 0.0,
   };
 
+  Position? _previousPosition;
+
   bool get isMockWalkingEnabled => _mockWalkingEnabled;
   bool get isUsingMockLocation => _useMockLocation;
 
@@ -35,7 +37,7 @@ class LocationService {
     _stopWalking();
     _walkingTimer = Timer.periodic(
       _mockLocationUpdateInterval,
-      (_) => _makeStep(direction),
+          (_) => _makeStep(direction),
     );
   }
 
@@ -53,6 +55,13 @@ class LocationService {
     if (_mockedPosition == null) return;
     final newPosition = _calculateNewPosition(direction);
     setMockedLocation(newPosition.latitude, newPosition.longitude);
+
+    if (_previousPosition != null) {
+      final distance = _calculateDistance(_previousPosition!, _mockedPosition!);
+      print("Dystans przebytej drogi: $distance meters");
+    }
+
+    _previousPosition = _mockedPosition;
   }
 
   Position _calculateNewPosition(Direction direction) {
@@ -62,12 +71,16 @@ class LocationService {
     switch (direction) {
       case Direction.north:
         newLat += _stepSize;
+        break;
       case Direction.south:
         newLat -= _stepSize;
+        break;
       case Direction.east:
         newLng += _stepSize;
+        break;
       case Direction.west:
         newLng -= _stepSize;
+        break;
     }
 
     return _createMockPosition(newLat, newLng);
@@ -129,11 +142,19 @@ class LocationService {
   }
 
   void setMockedLocation(double latitude, double longitude) {
+    _previousPosition = _mockedPosition;
     _mockedPosition = _createMockPosition(latitude, longitude);
   }
 
   void toggleMockLocation(bool useMock) {
     _useMockLocation = useMock;
+  }
+
+  double _calculateDistance(Position start, Position end) {
+    return Geolocator.distanceBetween(
+      start.latitude, start.longitude,
+      end.latitude, end.longitude,
+    );
   }
 }
 
