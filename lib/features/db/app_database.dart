@@ -22,6 +22,9 @@ class AppDatabase {
         db.execute(
           'CREATE TABLE statistics(id INTEGER PRIMARY KEY AUTOINCREMENT, distance REAL, timestamp TEXT)',
         );
+        db.execute(
+          'CREATE TABLE visited_pois(id INTEGER PRIMARY KEY AUTOINCREMENT, poi_id INTEGER, visit_count INTEGER, last_visited TEXT, visit_timestamp TEXT, FOREIGN KEY (poi_id) REFERENCES pois(id))'
+        );
       },
     );
   }

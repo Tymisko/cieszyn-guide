@@ -10,12 +10,16 @@ class StatisticsScreen extends StatefulWidget {
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
   late Future<double> totalKilometers;
+  late Future<Map<String, dynamic>> mostVisitedPOI;
+  late Future<int> distinctPOICount;
 
   @override
   void initState() {
     super.initState();
     final statisticService = StatisticService();
     totalKilometers = statisticService.getTotalDistance();
+    mostVisitedPOI = statisticService.getMostVisitedPOI();
+    distinctPOICount = statisticService.getDistinctVisitedPOIsCount();
   }
 
   @override
@@ -44,16 +48,53 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
             final totalKilometers = snapshot.data ?? 0.0;
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildStatCard(
-                  'Total distance',
-                  '${(totalKilometers / 1000).toStringAsFixed(2)} km',
-                  Icons.directions_walk,
-                  Colors.blue,
-                ),
-              ],
+            return FutureBuilder<Map<String, dynamic>>(
+              future: mostVisitedPOI,
+              builder: (context, mostVisitedSnapshot) {
+                if (mostVisitedSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final mostVisitedData = mostVisitedSnapshot.data ?? {};
+                final mostVisitedPOI = mostVisitedData.isNotEmpty
+                    ? 'POI ID: ${mostVisitedData['poi_id']} with ${mostVisitedData['visit_count']} visits'
+                    : 'No visits recorded';
+
+                return FutureBuilder<int>(
+                  future: distinctPOICount,
+                  builder: (context, distinctPOICountSnapshot) {
+                    if (distinctPOICountSnapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final distinctPOIs = distinctPOICountSnapshot.data ?? 0;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildStatCard(
+                          'Total distance',
+                          '${(totalKilometers / 1000).toStringAsFixed(2)} km',
+                          Icons.directions_walk,
+                          Colors.blue,
+                        ),
+                        _buildStatCard(
+                          'Most visited POI',
+                          mostVisitedPOI,
+                          Icons.location_on,
+                          Colors.orange,
+                        ),
+                        _buildStatCard(
+                          'Distinct visited POIs',
+                          '$distinctPOIs POIs',
+                          Icons.place,
+                          Colors.green,
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
             );
           },
         ),
@@ -62,11 +103,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+      String title,
+      String value,
+      IconData icon,
+      Color color,
+      ) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
