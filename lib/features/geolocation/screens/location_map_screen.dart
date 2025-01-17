@@ -32,6 +32,11 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
   final Set<Marker> _markers = {};
   final POIService _poiService = POIService();
   String? _selectedPOIName;
+  List<String> _favouritePOIs = [];
+
+  List<String> _getFavouritePOIs() {
+    return _favouritePOIs;
+  }
 
   @override
   void initState() {
@@ -184,54 +189,107 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
     );
   }
 
-  void _showPOIDetails(Map<String, dynamic> poi) {
-    setState(() {
-      _selectedPOIName = poi['name'];
-    });
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return GestureDetector(
-          onTap: () {
-            Navigator.pop(context); // Close the bottom sheet
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => POIDetailsScreen(
-                  poiName: poi['name'],
-                  description: poi['description'],
-                  category: poi['category'],
-                  rating: poi['rating'],
-                  address: poi['address'],
-                  website: poi['website'],
-                  phone: poi['phone'],
-                  photoFile: poi['photoFile'],
-                  openNow: poi['openNow'],
-                  hours: Map<String, String>.from(json.decode(poi['hours'])),
-                  reviews: List<Map<String, dynamic>>.from(json.decode(poi['reviews'])),
-                ),
+void _showPOIDetails(Map<String, dynamic> poi) {
+  setState(() {
+    _selectedPOIName = poi['name'];
+
+    // Ustaw domyślną wartość `isFavorite` na `false`, jeśli jest `null`
+    poi['isFavorite'] = poi['isFavorite'] ?? false;
+  });
+
+  showModalBottomSheet(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter bottomSheetSetState) {
+          return GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          poi['name'],
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          poi['isFavorite'] ? Icons.favorite : Icons.favorite_border,
+                          color: poi['isFavorite'] ? Colors.red : Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            if (poi['isFavorite']) {
+                              // Jeśli POI jest już ulubione, usuń je z listy
+                              _favouritePOIs.remove(poi['name']);
+                            } else {
+                              // Jeśli POI nie jest ulubione, dodaj je do listy
+                              _favouritePOIs.add(poi['name']);
+                            }
+                            poi['isFavorite'] = !poi['isFavorite'];
+                          });
+                          bottomSheetSetState(() {
+                            poi['isFavorite'] = poi['isFavorite'];
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    poi['minimalDescription'],
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context); // Zamknięcie bottom sheet
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => POIDetailsScreen(
+                              poiName: poi['name'],
+                              description: poi['description'],
+                              category: poi['category'],
+                              rating: poi['rating'],
+                              address: poi['address'],
+                              website: poi['website'],
+                              phone: poi['phone'],
+                              photoFile: poi['photoFile'],
+                              openNow: poi['openNow'],
+                              hours: Map<String, String>.from(json.decode(poi['hours'])),
+                              reviews: List<Map<String, dynamic>>.from(json.decode(poi['reviews'])),
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('View Details'),
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  poi['name'],
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                Text(poi['minimalDescription']),
-                // Add more details as needed
-              ],
             ),
-          ),
-        );
-      },
-    );
-  }
+          );
+        },
+      );
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -249,6 +307,7 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
             _locationService.toggleMockWalking(value);
           });
         },
+        favouritePOIs: _getFavouritePOIs(),
       ),
       body: Stack(
         children: [
