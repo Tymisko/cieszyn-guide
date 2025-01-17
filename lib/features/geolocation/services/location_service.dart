@@ -1,5 +1,7 @@
 import 'package:geolocator/geolocator.dart';
+import 'package:sqflite/sqflite.dart';
 import 'dart:async';
+import '../../db/app_database.dart';
 
 /// Service responsible for handling location-related operations including
 /// real location tracking and mock location functionality.
@@ -51,7 +53,7 @@ class LocationService {
   bool get _canStartWalking =>
       _useMockLocation && _mockWalkingEnabled && _mockedPosition != null;
 
-  void _makeStep(Direction direction) {
+  void _makeStep(Direction direction) async {
     if (_mockedPosition == null) return;
     final newPosition = _calculateNewPosition(direction);
     setMockedLocation(newPosition.latitude, newPosition.longitude);
@@ -59,6 +61,7 @@ class LocationService {
     if (_previousPosition != null) {
       final distance = _calculateDistance(_previousPosition!, _mockedPosition!);
       print("Dystans przebytej drogi: $distance meters");
+      await saveDistance(distance);
     }
 
     _previousPosition = _mockedPosition;
@@ -140,6 +143,19 @@ class LocationService {
           'Location permissions are permanently denied');
     }
   }
+
+  Future<void> saveDistance(double distance) async {
+    final db = await AppDatabase.getDatabase();
+    await db.insert(
+      'statistics',
+      {
+        'distance': distance,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
 
   void setMockedLocation(double latitude, double longitude) {
     _previousPosition = _mockedPosition;
