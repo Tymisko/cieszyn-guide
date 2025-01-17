@@ -32,6 +32,11 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
   final Set<Marker> _markers = {};
   final POIService _poiService = POIService();
   String? _selectedPOIName;
+  List<String> _favouritePOIs = [];
+
+  List<String> _getFavouritePOIs() {
+    return _favouritePOIs;
+  }
 
   @override
   void initState() {
@@ -226,6 +231,13 @@ void _showPOIDetails(Map<String, dynamic> poi) {
                         ),
                         onPressed: () {
                           setState(() {
+                            if (poi['isFavorite']) {
+                              // Jeśli POI jest już ulubione, usuń je z listy
+                              _favouritePOIs.remove(poi['name']);
+                            } else {
+                              // Jeśli POI nie jest ulubione, dodaj je do listy
+                              _favouritePOIs.add(poi['name']);
+                            }
                             poi['isFavorite'] = !poi['isFavorite'];
                           });
                           bottomSheetSetState(() {
@@ -295,6 +307,7 @@ void _showPOIDetails(Map<String, dynamic> poi) {
             _locationService.toggleMockWalking(value);
           });
         },
+        favouritePOIs: _getFavouritePOIs(),
       ),
       body: Stack(
         children: [

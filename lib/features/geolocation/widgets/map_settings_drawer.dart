@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:cieszyn_guide/features/favourites/favourites_page.dart';
 class MapSettingsDrawer extends StatelessWidget {
   static const _drawerHeaderHeight = 24.0;
   static const _drawerHeaderPadding = EdgeInsets.zero;
@@ -8,6 +8,7 @@ class MapSettingsDrawer extends StatelessWidget {
   final bool showArrowControls;
   final VoidCallback onToggleMockLocation;
   final ValueChanged<bool> onToggleArrowControls;
+  final List<String> favouritePOIs; // Lista ulubionych punktów POI
 
   const MapSettingsDrawer({
     super.key,
@@ -15,6 +16,7 @@ class MapSettingsDrawer extends StatelessWidget {
     required this.showArrowControls,
     required this.onToggleMockLocation,
     required this.onToggleArrowControls,
+    required this.favouritePOIs, // Dodane wymagane ulubione POI
   });
 
   String get _mockLocationStatus =>
@@ -53,6 +55,24 @@ class MapSettingsDrawer extends StatelessWidget {
     );
   }
 
+  Widget _buildFavouritesTile(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.favorite, color: Colors.red),
+      title: const Text('Ulubione Punkty POI'),
+      onTap: () {
+        Navigator.pop(context); // Zamknij drawer
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FavouritesPage(
+              favouritePOIs: favouritePOIs, // Przekazanie listy ulubionych
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildCloseButton(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.close),
@@ -71,6 +91,7 @@ class MapSettingsDrawer extends StatelessWidget {
           _buildMockLocationTile(),
           _buildArrowControlsTile(),
           const Divider(),
+          _buildFavouritesTile(context), // Dodana opcja ulubionych
           _buildCloseButton(context),
         ],
       ),
