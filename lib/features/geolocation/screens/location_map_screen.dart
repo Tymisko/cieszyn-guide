@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import '../services/poi_service.dart';
 import 'poi_details_screen.dart';
 import 'dart:convert';
+import '../services/poi_service.dart';
 
 class LocationMapScreen extends StatefulWidget {
   const LocationMapScreen({super.key});
@@ -192,9 +193,7 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
 void _showPOIDetails(Map<String, dynamic> poi) {
   setState(() {
     _selectedPOIName = poi['name'];
-
-    // Ustaw domyślną wartość `isFavorite` na `false`, jeśli jest `null`
-    poi['isFavorite'] = poi['isFavorite'] ?? false;
+    poi['isFavourite'] = poi['isFavourite'] ?? 0; 
   });
 
   showModalBottomSheet(
@@ -226,23 +225,29 @@ void _showPOIDetails(Map<String, dynamic> poi) {
                       ),
                       IconButton(
                         icon: Icon(
-                          poi['isFavorite'] ? Icons.favorite : Icons.favorite_border,
-                          color: poi['isFavorite'] ? Colors.red : Colors.grey,
+                          (poi['isFavourite'] == 1) 
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: (poi['isFavourite'] == 1) ? Colors.red : Colors.grey,
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           setState(() {
-                            if (poi['isFavorite']) {
-                              // Jeśli POI jest już ulubione, usuń je z listy
+                            if (poi['isFavourite'] == 1) {
                               _favouritePOIs.remove(poi['name']);
                             } else {
-                              // Jeśli POI nie jest ulubione, dodaj je do listy
                               _favouritePOIs.add(poi['name']);
                             }
-                            poi['isFavorite'] = !poi['isFavorite'];
+                            poi['isFavourite'] = (poi['isFavourite'] == 1) ? 0 : 1;
                           });
+
                           bottomSheetSetState(() {
-                            poi['isFavorite'] = poi['isFavorite'];
+                            poi['isFavourite'] = poi['isFavourite'];
                           });
+
+                          await _poiService.updatePOI(
+                            poi['id'],
+                            {'isFavourite': poi['isFavourite']},
+                          );
                         },
                       ),
                     ],
@@ -257,7 +262,7 @@ void _showPOIDetails(Map<String, dynamic> poi) {
                     alignment: Alignment.centerRight,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context); // Zamknięcie bottom sheet
+                        Navigator.pop(context); 
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -289,6 +294,7 @@ void _showPOIDetails(Map<String, dynamic> poi) {
     },
   );
 }
+
 
 
   @override

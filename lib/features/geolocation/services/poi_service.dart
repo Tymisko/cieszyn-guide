@@ -17,7 +17,7 @@ class POIService {
       path,
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE pois(id INTEGER PRIMARY KEY, name TEXT, latitude REAL, longitude REAL, minimalDescription TEXT, description TEXT, category TEXT, rating REAL, address TEXT, website TEXT, phone TEXT, photoFile TEXT, openNow INTEGER, hours TEXT, reviews TEXT)',
+          'CREATE TABLE pois(id INTEGER PRIMARY KEY, name TEXT, latitude REAL, longitude REAL, minimalDescription TEXT, description TEXT, category TEXT, rating REAL, address TEXT, website TEXT, phone TEXT, photoFile TEXT, openNow INTEGER, hours TEXT, reviews TEXT, isFavourite INTEGER)',
         );
       },
       version: 1,
@@ -57,6 +57,17 @@ class POIService {
     }).toList();
   }
 
+  Future<void> updatePOI(int id, Map<String, dynamic> updatedFields) async {
+  final db = await database;
+
+  await db.update(
+    'pois',
+    updatedFields,
+    where: 'id = ?', 
+    whereArgs: [id],
+  );
+}
+
   List<Map<String, dynamic>> _getPredefinedPOIs(Position position) {
     return [
       {
@@ -74,6 +85,7 @@ class POIService {
         'openNow': true,
         'hours': '{"monday": "09:00 - 17:00", "tuesday": "09:00 - 17:00", "wednesday": "09:00 - 17:00", "thursday": "09:00 - 17:00", "friday": "09:00 - 17:00", "saturday": "10:00 - 16:00", "sunday": "Closed"}',
         'reviews': '[{"user": "John Doe", "comment": "A must-see! Great historic value.", "rating": 5}, {"user": "Jane Smith", "comment": "Quite crowded, but worth the visit.", "rating": 4}]',
+        'isFavourite': 0,
       },
       {
         'name': 'Gourmet Restaurant',
@@ -90,6 +102,7 @@ class POIService {
         'openNow': false,
         'hours': '{"monday": "11:00 - 22:00", "tuesday": "11:00 - 22:00", "wednesday": "11:00 - 22:00", "thursday": "11:00 - 22:00", "friday": "11:00 - 23:00", "saturday": "10:00 - 23:00", "sunday": "Closed"}',
         'reviews': '[{"user": "Alice Brown", "comment": "Delicious food and friendly staff!", "rating": 5}, {"user": "Bob Johnson", "comment": "A bit pricey but worth it.", "rating": 4}]',
+        'isFavourite': 0,
       },
       {
         'name': 'City Museum',
@@ -106,6 +119,7 @@ class POIService {
         'openNow': true,
         'hours': '{"monday": "09:00 - 18:00", "tuesday": "09:00 - 18:00", "wednesday": "09:00 - 18:00", "thursday": "09:00 - 18:00", "friday": "09:00 - 20:00", "saturday": "09:00 - 20:00", "sunday": "10:00 - 16:00"}',
         'reviews': '[{"user": "Sarah Lee", "comment": "Loved the modern art section!", "rating": 5}, {"user": "Tom White", "comment": "Informative exhibits but can feel small.", "rating": 4}]',
+        'isFavourite': 0,
       },
     ];
   }
