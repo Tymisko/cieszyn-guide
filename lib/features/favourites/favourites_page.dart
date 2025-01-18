@@ -9,7 +9,7 @@ class FavouritesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ulubione Punkty POI'),
+        title: Text('Favorite POIs'),
       ),
       body: ListView.builder(
         itemCount: favouritePOIs.length,
