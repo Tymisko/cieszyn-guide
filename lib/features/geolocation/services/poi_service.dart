@@ -35,6 +35,17 @@ class POIService {
     }).toList();
   }
 
+    Future<void> updatePOI(int id, Map<String, dynamic> updatedFields) async {
+  final db = await AppDatabase.getDatabase();
+
+  await db.update(
+    'pois',
+    updatedFields,
+    where: 'id = ?', 
+    whereArgs: [id],
+  );
+}
+
   List<Map<String, dynamic>> _getPredefinedPOIs(Position position) {
     return [
       {
@@ -55,6 +66,7 @@ class POIService {
             '{"monday": "09:00 - 17:00", "tuesday": "09:00 - 17:00", "wednesday": "09:00 - 17:00", "thursday": "09:00 - 17:00", "friday": "09:00 - 17:00", "saturday": "10:00 - 16:00", "sunday": "Closed"}',
         'reviews':
             '[{"user": "John Doe", "comment": "A must-see! Great historic value.", "rating": 5}, {"user": "Jane Smith", "comment": "Quite crowded, but worth the visit.", "rating": 4}]',
+        'isFavourite': 0,
       },
       {
         'name': 'Gourmet Restaurant',
@@ -74,6 +86,7 @@ class POIService {
             '{"monday": "11:00 - 22:00", "tuesday": "11:00 - 22:00", "wednesday": "11:00 - 22:00", "thursday": "11:00 - 22:00", "friday": "11:00 - 23:00", "saturday": "10:00 - 23:00", "sunday": "Closed"}',
         'reviews':
             '[{"user": "Alice Brown", "comment": "Delicious food and friendly staff!", "rating": 5}, {"user": "Bob Johnson", "comment": "A bit pricey but worth it.", "rating": 4}]',
+        'isFavourite': 0,
       },
       {
         'name': 'City Museum',
@@ -93,6 +106,7 @@ class POIService {
             '{"monday": "09:00 - 18:00", "tuesday": "09:00 - 18:00", "wednesday": "09:00 - 18:00", "thursday": "09:00 - 18:00", "friday": "09:00 - 20:00", "saturday": "09:00 - 20:00", "sunday": "10:00 - 16:00"}',
         'reviews':
             '[{"user": "Sarah Lee", "comment": "Loved the modern art section!", "rating": 5}, {"user": "Tom White", "comment": "Informative exhibits but can feel small.", "rating": 4}]',
+        'isFavourite': 0,
       },
     ];
   }
