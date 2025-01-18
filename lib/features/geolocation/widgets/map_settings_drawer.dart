@@ -8,7 +8,8 @@ class MapSettingsDrawer extends StatelessWidget {
   final bool showArrowControls;
   final VoidCallback onToggleMockLocation;
   final ValueChanged<bool> onToggleArrowControls;
-  final List<String> favouritePOIs; // Lista ulubionych punktów POI
+  final List<Map<String, dynamic>> favouritePOIs;
+  final Function(double, double) onPOISelected;
 
   const MapSettingsDrawer({
     super.key,
@@ -16,7 +17,8 @@ class MapSettingsDrawer extends StatelessWidget {
     required this.showArrowControls,
     required this.onToggleMockLocation,
     required this.onToggleArrowControls,
-    required this.favouritePOIs, // Dodane wymagane ulubione POI
+    required this.favouritePOIs,
+    required this.onPOISelected,
   });
 
   String get _mockLocationStatus =>
@@ -58,20 +60,23 @@ class MapSettingsDrawer extends StatelessWidget {
   Widget _buildFavouritesTile(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.favorite, color: Colors.red),
-      title: const Text('Ulubione Punkty POI'),
+      title: const Text('Favorite POIs'),
       onTap: () {
         Navigator.pop(context); // Zamknij drawer
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => FavouritesPage(
-              favouritePOIs: favouritePOIs, // Przekazanie listy ulubionych
+              favouritePOIs: favouritePOIs,
+              onSelectPOI: onPOISelected,
             ),
           ),
         );
       },
     );
   }
+
+  
 
   Widget _buildCloseButton(BuildContext context) {
     return ListTile(
@@ -91,7 +96,7 @@ class MapSettingsDrawer extends StatelessWidget {
           _buildMockLocationTile(),
           _buildArrowControlsTile(),
           const Divider(),
-          _buildFavouritesTile(context), // Dodana opcja ulubionych
+          _buildFavouritesTile(context),
           _buildCloseButton(context),
         ],
       ),

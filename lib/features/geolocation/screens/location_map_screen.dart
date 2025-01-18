@@ -33,9 +33,9 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
   final Set<Marker> _markers = {};
   final POIService _poiService = POIService();
   String? _selectedPOIName;
-  List<String> _favouritePOIs = [];
+  List<Map<String, dynamic>> _favouritePOIs = [];
 
-  List<String> _getFavouritePOIs() {
+ List<Map<String, dynamic>> _getFavouritePOIs() {
     return _favouritePOIs;
   }
 
@@ -77,6 +77,9 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
             ),
           ),
         );
+        if (poi['isFavourite'] == 1) {
+        _favouritePOIs.add(poi);
+        }
       }
     });
   }
@@ -117,6 +120,11 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
     _locationUpdateTimer?.cancel();
     _locationUpdateTimer = null;
   }
+
+  void _centerMapOnPOI(double latitude, double longitude) {
+  _mapController.move(LatLng(latitude, longitude), _defaultZoomLevel);
+}
+
 
   Widget _handleDirectionalControl(
     Direction direction, {
@@ -233,9 +241,9 @@ void _showPOIDetails(Map<String, dynamic> poi) {
                         onPressed: () async {
                           setState(() {
                             if (poi['isFavourite'] == 1) {
-                              _favouritePOIs.remove(poi['name']);
+                              _favouritePOIs.remove(poi);
                             } else {
-                              _favouritePOIs.add(poi['name']);
+                              _favouritePOIs.add(poi);
                             }
                             poi['isFavourite'] = (poi['isFavourite'] == 1) ? 0 : 1;
                           });
@@ -314,6 +322,7 @@ void _showPOIDetails(Map<String, dynamic> poi) {
           });
         },
         favouritePOIs: _getFavouritePOIs(),
+        onPOISelected: _centerMapOnPOI,
       ),
       body: Stack(
         children: [
