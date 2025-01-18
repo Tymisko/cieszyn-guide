@@ -1,5 +1,7 @@
 import 'package:geolocator/geolocator.dart';
+import 'package:sqflite/sqflite.dart';
 import 'dart:async';
+import '../../db/app_database.dart';
 
 /// Service responsible for handling location-related operations including
 /// real location tracking and mock location functionality.
@@ -21,7 +23,10 @@ class LocationService {
     'headingAccuracy': 0.0,
   };
 
+  Position? _previousPosition;
+
   bool get isMockWalkingEnabled => _mockWalkingEnabled;
+
   bool get isUsingMockLocation => _useMockLocation;
 
   void toggleMockWalking(bool enabled) {
@@ -49,10 +54,19 @@ class LocationService {
   bool get _canStartWalking =>
       _useMockLocation && _mockWalkingEnabled && _mockedPosition != null;
 
-  void _makeStep(Direction direction) {
+  void _makeStep(Direction direction) async {
     if (_mockedPosition == null) return;
     final newPosition = _calculateNewPosition(direction);
     setMockedLocation(newPosition.latitude, newPosition.longitude);
+
+    if (_previousPosition != null) {
+      final distance = _calculateDistance(_previousPosition!, _mockedPosition!);
+      print("Dystans przebytej drogi: $distance meters");
+      await saveDistance(distance);
+      await checkAndMarkPOIVisited(_mockedPosition!);
+    }
+
+    _previousPosition = _mockedPosition;
   }
 
   Position _calculateNewPosition(Direction direction) {
@@ -62,12 +76,16 @@ class LocationService {
     switch (direction) {
       case Direction.north:
         newLat += _stepSize;
+        break;
       case Direction.south:
         newLat -= _stepSize;
+        break;
       case Direction.east:
         newLng += _stepSize;
+        break;
       case Direction.west:
         newLng -= _stepSize;
+        break;
     }
 
     return _createMockPosition(newLat, newLng);
@@ -86,6 +104,71 @@ class LocationService {
       altitudeAccuracy: _defaultMockValues['altitudeAccuracy']!,
       headingAccuracy: _defaultMockValues['headingAccuracy']!,
     );
+  }
+
+  Future<void> checkAndMarkPOIVisited(Position position) async {
+    const double proximityThreshold = 25.0;
+
+    final db = await AppDatabase.getDatabase();
+    final List<Map<String, dynamic>> pois = await db.query('pois');
+
+    for (var poi in pois) {
+      final double distance = Geolocator.distanceBetween(
+        position.latitude,
+        position.longitude,
+        poi['latitude'],
+        poi['longitude'],
+      );
+
+      if (distance < proximityThreshold) {
+        await _checkAndMarkPOIAsVisited(poi['id']);
+      }
+    }
+  }
+
+  Future<void> _checkAndMarkPOIAsVisited(int poiId) async {
+    final db = await AppDatabase.getDatabase();
+
+    final List<Map<String, dynamic>> visits = await db.query(
+      'visited_pois',
+      where: 'poi_id = ?',
+      whereArgs: [poiId],
+      orderBy: 'visit_timestamp DESC',
+      limit: 1,
+    );
+
+    if (visits.isNotEmpty) {
+      final lastVisitTimestamp =
+          DateTime.parse(visits.first['visit_timestamp']);
+      final currentTimestamp = DateTime.now();
+      final difference = currentTimestamp.difference(lastVisitTimestamp);
+
+      if (difference.inMinutes >= 5) {
+        await _markPOIAsVisited(poiId);
+      }
+    } else {
+      await _markPOIAsVisited(poiId);
+    }
+  }
+
+  Future<void> _markPOIAsVisited(int poiId) async {
+    final db = await AppDatabase.getDatabase();
+    final poi = await db.query(
+      'pois',
+      where: 'id = ?',
+      whereArgs: [poiId],
+    );
+
+    if (poi.isNotEmpty) {
+      await db.insert(
+        'visited_pois',
+        {
+          'poi_id': poiId,
+          'visit_timestamp': DateTime.now().toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
   }
 
   Future<Position> getCurrentLocation() async {
@@ -128,17 +211,40 @@ class LocationService {
     }
   }
 
+  Future<void> saveDistance(double distance) async {
+    final db = await AppDatabase.getDatabase();
+    await db.insert(
+      'statistics',
+      {
+        'distance': distance,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   void setMockedLocation(double latitude, double longitude) {
+    _previousPosition = _mockedPosition;
     _mockedPosition = _createMockPosition(latitude, longitude);
   }
 
   void toggleMockLocation(bool useMock) {
     _useMockLocation = useMock;
   }
+
+  double _calculateDistance(Position start, Position end) {
+    return Geolocator.distanceBetween(
+      start.latitude,
+      start.longitude,
+      end.latitude,
+      end.longitude,
+    );
+  }
 }
 
 class LocationException implements Exception {
   final String message;
+
   const LocationException(this.message);
 
   @override
