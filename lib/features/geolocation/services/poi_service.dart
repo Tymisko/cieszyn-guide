@@ -35,6 +35,17 @@ class POIService {
     }).toList();
   }
 
+    Future<void> updatePOI(int id, Map<String, dynamic> updatedFields) async {
+  final db = await AppDatabase.getDatabase();
+
+  await db.update(
+    'pois',
+    updatedFields,
+    where: 'id = ?', 
+    whereArgs: [id],
+  );
+}
+
   List<Map<String, dynamic>> _getPredefinedPOIs(Position position) {
     return [
       {

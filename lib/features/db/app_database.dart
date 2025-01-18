@@ -17,7 +17,7 @@ class AppDatabase {
       version: 1,
       onCreate: (db, version) {
         db.execute(
-          'CREATE TABLE pois(id INTEGER PRIMARY KEY, name TEXT, latitude REAL, longitude REAL, minimalDescription TEXT, description TEXT, category TEXT, rating REAL, address TEXT, website TEXT, phone TEXT, photoFile TEXT, openNow INTEGER, hours TEXT, reviews TEXT)',
+          'CREATE TABLE pois(id INTEGER PRIMARY KEY, name TEXT, latitude REAL, longitude REAL, minimalDescription TEXT, description TEXT, category TEXT, rating REAL, address TEXT, website TEXT, phone TEXT, photoFile TEXT, openNow INTEGER, hours TEXT, reviews TEXT, isFavourite INTEGER)',
         );
         db.execute(
           'CREATE TABLE statistics(id INTEGER PRIMARY KEY AUTOINCREMENT, distance REAL, timestamp TEXT)',
